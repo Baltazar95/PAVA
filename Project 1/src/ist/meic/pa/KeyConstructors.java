@@ -1,5 +1,8 @@
 package ist.meic.pa;
-import javassist.*;
+
+import javassist.ClassPool;
+import javassist.Loader;
+import javassist.Translator;
 
 public class KeyConstructors {
 

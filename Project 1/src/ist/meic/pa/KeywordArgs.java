@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface KeywordArgs {
+public @interface KeywordArgs 
+{
 	String value();
 }
