@@ -7,6 +7,7 @@ import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtConstructor;
+import javassist.CtField;
 import javassist.NotFoundException;
 import javassist.Translator;
 
@@ -14,8 +15,20 @@ import javassist.Translator;
 public class MyTranslator implements Translator
 {
 	public Map<String, String> map = new HashMap<String, String>();
+	public Map<String, String> convertTypes = new HashMap<String, String>();
 	
-	public void start(ClassPool pool) throws NotFoundException, CannotCompileException {}
+	public void start(ClassPool pool) throws NotFoundException, CannotCompileException 
+	{
+		convertTypes.put("int", "Integer");
+		convertTypes.put("float", "Float");
+		convertTypes.put("double", "Double");
+		convertTypes.put("long", "Long");
+		convertTypes.put("boolean", "Boolean");
+		convertTypes.put("short", "Short");
+		convertTypes.put("byte", "Byte");
+		convertTypes.put("char", "Character");
+		convertTypes.put("java.lang.String", "String");
+	}
 	
 	public void onLoad(ClassPool pool, String className) throws NotFoundException, CannotCompileException 
 	{
@@ -32,7 +45,7 @@ public class MyTranslator implements Translator
 		}
 	}
 	
-	public void CheckKeywordArgs(CtClass ctClass) throws ClassNotFoundException 
+	public void CheckKeywordArgs(CtClass ctClass) throws ClassNotFoundException, CannotCompileException, NotFoundException 
 	{
 		for(CtConstructor ctConstructor: ctClass.getDeclaredConstructors())
 		{
@@ -49,10 +62,68 @@ public class MyTranslator implements Translator
 		}
 	}
 	
-	public void Injection(CtClass ctClass, CtConstructor ctConstructor, Object annotation)
+	public void Injection(CtClass ctClass, CtConstructor ctConstructor, Object annotation) throws CannotCompileException, NotFoundException
 	{
+		String body="{ boolean verifyVariable = false;";
+		
 		//FIXME continue this
-		//ctClass.getDeclaredFields();
+		for(CtField ct : ctClass.getDeclaredFields())
+		{
+			if(map.containsKey(ct.getName()))
+			{
+				String type = ct.getType().getName();
+//				body = body + "System.out.println(\""+ct.getName()+"\");\n";
+				System.out.println(ct.getName());	
+				body = body + "for(int i=0; i < $1.length; i++)\n"
+							+ "{\n"
+							+ "    if($1[i].equals(\""+ ct.getName() +"\"))\n"
+							+ "    {\n"	
+							+ "        if(" + convertTypes.get(type)  + ".class.isInstance($1[i+1]))\n"
+							+ "        {\n"
+							+ "				String t = \"" + type + "\";" 
+							+ "	       	  if(t.equals(\"java.lang.String\"))"
+							+ "			  {"
+							+ "					System.out.println(($1[i+1]).toString());"
+							//+ "					" + ct.getName() + "=\"\";\n"
+							+ "           		verifyVariable = true;\n"
+							+ "           		i++;\n"
+							+ "        	  }\n"
+							+ "			  else"
+							+ "			  {"
+							//+ "               System.out.println(\""+ct.getName()+"\");\n"
+							//+ "           		"+ ct.getName() + "= ((" + convertTypes.get(type)  + ") $1[i+1])." + type + "Value();\n"
+							+ "           		verifyVariable = true;\n"
+							+ "           		i++;\n"
+							+ "			  }"
+							+ "		   }"
+							+ "        else\n"
+							+ "        {\n"
+							+ "           System.out.println(\"Wrong value for variable "+ ct.getName() +"\");\n"
+							+ "        }\n"
+							+ "     }\n"
+							+ "}\n"
+							+ "if(!verifyVariable)\n"
+							+ "{\n"
+							+ " " + ct.getName() + "=" + map.get(ct.getName()) + ";\n"
+							+ "}\n"
+							+ "else\n"
+							+ "{\n"
+							+ "     verifyVariable = false;\n"
+							+ "}\n";
+							//+ "System.out.println("+ct.getName()+");\n"; 
+				
+			}
+			else
+			{
+				//FIXME create exception
+			}
+		}
+		body = body + "}";
+		
+		//System.out.println(body);
+		
+		ctConstructor.setBody(body);
+		
 	}
 	
 	public void SplitArgs(String args)
@@ -62,7 +133,14 @@ public class MyTranslator implements Translator
 		for(String param : parts)
 		{
 			paramValue = param.split("=");
-			map.put(paramValue[0], paramValue[1]);
+			if(paramValue.length == 1)
+			{
+				map.put(paramValue[0], "");
+			}
+			else
+			{
+				map.put(paramValue[0], paramValue[1]);
+			}
 		}
 
 	}
