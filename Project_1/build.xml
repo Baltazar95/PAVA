@@ -33,7 +33,7 @@
     
     <target name="run" depends="jar">
         <java fork="true" classname="${main-class}" error="${err.out}">
-            <arg value="${arg0}"/>
+            <arg value="TestA"/>
             <classpath>
                 <path refid="classpath"/>
                 <path location="${jar.dir}/${ant.project.name}.jar"/>
