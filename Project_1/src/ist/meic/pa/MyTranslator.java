@@ -90,7 +90,7 @@ public class MyTranslator implements Translator
 							+ "        	  }\n"
 							+ "			  else"
 							+ "			  {"
-							//+ "               System.out.println(\""+ct.getName()+"\");\n"
+							+ "					System.out.println(($1[i+1]).toString());"
 							//+ "           		"+ ct.getName() + "= ((" + convertTypes.get(type)  + ") $1[i+1])." + type + "Value();\n"
 							+ "           		verifyVariable = true;\n"
 							+ "           		i++;\n"
