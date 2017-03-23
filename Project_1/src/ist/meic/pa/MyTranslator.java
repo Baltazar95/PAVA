@@ -64,38 +64,39 @@ public class MyTranslator implements Translator
 	
 	public void Injection(CtClass ctClass, CtConstructor ctConstructor, Object annotation) throws CannotCompileException, NotFoundException
 	{
-		String body="{ boolean verifyVariable = false;";
+		String body="{ boolean verifyVariable = false;"
+					+ "String t=\"\";";
 		
 		//FIXME continue this
 		for(CtField ct : ctClass.getDeclaredFields())
 		{
 			if(map.containsKey(ct.getName()))
 			{
-				String type = ct.getType().getName();
 //				body = body + "System.out.println(\""+ct.getName()+"\");\n";
-				System.out.println(ct.getName());	
+				//System.out.println(ct.getName());	
+				
 				body = body + "for(int i=0; i < $1.length; i++)\n"
 							+ "{\n"
 							+ "    if($1[i].equals(\""+ ct.getName() +"\"))\n"
 							+ "    {\n"	
-							+ "        if(" + convertTypes.get(type)  + ".class.isInstance($1[i+1]))\n"
+							+ "        if(" + convertTypes.get(ct.getType().getName())  + ".class.isInstance($1[i+1]))\n"
 							+ "        {\n"
-							+ "				String t = \"" + type + "\";" 
-							+ "	       	  if(t.equals(\"java.lang.String\"))"
-							+ "			  {"
-							+ "					System.out.println(($1[i+1]).toString());"
-							//+ "					" + ct.getName() + "=\"\";\n"
+							+ "				t = \"" + ct.getType().getName() + "\";" 
+							+ "	       	  if(t.equals(\"java.lang.String\"))\n"
+							+ "			  {\n"
+							+ "					System.out.println(($1[i+1]));\n"
+							+ "					"+ct.getName()+"=((String) $1[i+1]);\n"
 							+ "           		verifyVariable = true;\n"
 							+ "           		i++;\n"
 							+ "        	  }\n"
-							+ "			  else"
-							+ "			  {"
-							+ "					System.out.println(($1[i+1]).toString());"
-							//+ "           		"+ ct.getName() + "= ((" + convertTypes.get(type)  + ") $1[i+1])." + type + "Value();\n"
+							+ "			  else\n"
+							+ "			  {\n"
+							+ "					System.out.println(($1[i+1]));\n"
+							+ "           		"+ ct.getName() + "= ((" + convertTypes.get(ct.getType().getName())  + ") $1[i+1])." + ct.getType().getName() + "Value();\n"
 							+ "           		verifyVariable = true;\n"
 							+ "           		i++;\n"
-							+ "			  }"
-							+ "		   }"
+							+ "			  }\n"
+							+ "		   }\n"
 							+ "        else\n"
 							+ "        {\n"
 							+ "           System.out.println(\"Wrong value for variable "+ ct.getName() +"\");\n"
@@ -110,7 +111,7 @@ public class MyTranslator implements Translator
 							+ "{\n"
 							+ "     verifyVariable = false;\n"
 							+ "}\n";
-							//+ "System.out.println("+ct.getName()+");\n"; 
+							//+ "System.out.println("+body+");\n"; 
 				
 			}
 			else
