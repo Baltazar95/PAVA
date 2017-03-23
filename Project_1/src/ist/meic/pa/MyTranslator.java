@@ -73,44 +73,29 @@ public class MyTranslator implements Translator
 			{
 				String type = ct.getType().getName();
 //				body = body + "System.out.println(\""+ct.getName()+"\");\n";
-				System.out.println(ct.getName());	
+//				System.out.println(ct.getName());	
 				body = body + "for(int i=0; i < $1.length; i++)\n"
 							+ "{\n"
-							+ "    if($1[i].equals(\""+ ct.getName() +"\"))\n"
-							+ "    {\n"	
-							+ "        if(" + convertTypes.get(type)  + ".class.isInstance($1[i+1]))\n"
-							+ "        {\n"
-							+ "				String t = \"" + type + "\";" 
-							+ "	       	  if(t.equals(\"java.lang.String\"))"
-							+ "			  {"
-							+ "					System.out.println(($1[i+1]).toString());"
-							//+ "					" + ct.getName() + "=\"\";\n"
-							+ "           		verifyVariable = true;\n"
-							+ "           		i++;\n"
-							+ "        	  }\n"
-							+ "			  else"
-							+ "			  {"
-							+ "					System.out.println(($1[i+1]).toString());"
-							//+ "           		"+ ct.getName() + "= ((" + convertTypes.get(type)  + ") $1[i+1])." + type + "Value();\n"
-							+ "           		verifyVariable = true;\n"
-							+ "           		i++;\n"
-							+ "			  }"
-							+ "		   }"
-							+ "        else\n"
-							+ "        {\n"
-							+ "           System.out.println(\"Wrong value for variable "+ ct.getName() +"\");\n"
-							+ "        }\n"
-							+ "     }\n"
-							+ "}\n"
-							+ "if(!verifyVariable)\n"
-							+ "{\n"
-							+ " " + ct.getName() + "=" + map.get(ct.getName()) + ";\n"
-							+ "}\n"
-							+ "else\n"
-							+ "{\n"
-							+ "     verifyVariable = false;\n"
-							+ "}\n";
-							//+ "System.out.println("+ct.getName()+");\n"; 
+							+ "if($1[i].equals(\""+ ct.getName() +"\")){\n";
+
+				if((ct.getType().getName()).equals("java.lang.String")){
+					body = body + ct.getName()  + "= (String) $1[i+1];\n"
+								+ "           		verifyVariable = true;\n"
+								+ "           		i++;\n";
+					}
+				else{
+					body = body + ct.getName() + "= ((" + convertTypes.get(type)  + ") $1[i+1])." + type + "Value();\n"
+												+ " verifyVariable = true;\n"
+												+ " i++;\n"; 
+				}
+				body = body  + " }} if(!verifyVariable)\n"
+						+ "{\n"
+						+ " " + ct.getName() + "=" + map.get(ct.getName()) + ";\n"
+						+ "}\n"
+						+ "else\n"
+						+ "{\n"
+						+ "     verifyVariable = false;\n"
+						+ "}\n";
 				
 			}
 			else
@@ -119,8 +104,7 @@ public class MyTranslator implements Translator
 			}
 		}
 		body = body + "}";
-		
-		//System.out.println(body);
+	//	System.out.println(body);
 		
 		ctConstructor.setBody(body);
 		
@@ -157,3 +141,41 @@ public class MyTranslator implements Translator
 		}
 	}
 }
+
+/*
+body = body + "for(int i=0; i < $1.length; i++)\n"
+		+ "{\n"
+		+ "    if($1[i].equals(\""+ ct.getName() +"\"))\n"
+		+ "    {\n"	
+		+ "        if(" + convertTypes.get(type)  + ".class.isInstance($1[i+1]))\n"
+		+ "        {\n"
+		+ "				String t = \"" + type + "\";" 
+		+ "	       	  if(t.equals(\"java.lang.String\"))"
+		+ "			  {"
+		+ "					System.out.println(\"Entrei1\");"
+	 	+ "					" + ct.getName() + "= (String) $1[i+1];\n"
+		+ "           		verifyVariable = true;\n"
+		+ "           		i++;\n"
+		+ "        	  }\n"
+		+ "			  else"
+		+ "			  {"
+		+ "					System.out.println(\"Entrei2\");"
+//		+ "           		"+ ct.getName() + "= ((" + convertTypes.get(type)  + ") $1[i+1])." + type + "Value();\n"
+		+ "           		verifyVariable = true;\n"
+		+ "           		i++;\n"
+		+ "			  }"
+		+ "		   }"
+		+ "        else\n"
+		+ "        {\n"
+		+ "           System.out.println(\"Wrong value for variable "+ ct.getName() +"\");\n"
+		+ "        }\n"
+		+ "     }\n"
+		+ "}\n"
+		+ "if(!verifyVariable)\n"
+		+ "{\n"
+		+ " " + ct.getName() + "=" + map.get(ct.getName()) + ";\n"
+		+ "}\n"
+		+ "else\n"
+		+ "{\n"
+		+ "     verifyVariable = false;\n"
+		+ "}\n";*/
