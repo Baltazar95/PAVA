@@ -89,8 +89,9 @@ public class MyTranslator implements Translator
 	
 	public void Injection(CtClass ctClass, CtConstructor ctConstructor) throws CannotCompileException, NotFoundException
 	{
-		String body="{ boolean verifyVariable = false;";
-		
+		String body="{ boolean verifyVariable = false;"
+				+ "	   String[] check = new String[$1.length-1];";
+		String[] fields;
 		//FIXME continue this
 		for(CtField ct : ctClass.getFields())
 		{
@@ -101,7 +102,8 @@ public class MyTranslator implements Translator
 //				System.out.println(ct.getName());	
 				body = body + "for(int i=0; i < $1.length; i++)\n"
 							+ "{\n"
-							+ "if($1[i].equals(\""+ ct.getName() +"\")){\n";
+							+ "if($1[i].equals(\""+ ct.getName() +"\")){\n"
+									+ "check[i] = \"Here\"";
 
 				if((ct.getType().getName()).equals("java.lang.String")){
 					body = body + ct.getName()  + "= (String) $1[i+1];\n"
@@ -113,8 +115,10 @@ public class MyTranslator implements Translator
 												+ " verifyVariable = true;\n"
 												+ " i++;\n"; 
 				}
-				body = body  + " }"
-						+ "} if(!verifyVariable)\n"
+				body = body  + "check[i] = \"Here\""
+						+ " }"
+						+ "} "
+						+ "if(!verifyVariable)\n"
 						+ "{\n"
 						+ " " + ct.getName() + "=" + map.get(ct.getName()) + ";\n"
 						+ "}\n"
@@ -135,7 +139,14 @@ public class MyTranslator implements Translator
 		{
 			//throw new UnrecognizeKeywordException(); 
 		}
-		body = body + "}";
+		body = body + "for(int j = 0; j < check.length; j++)"
+				+ "{"
+				+ "if(!check[j].equals(\"Here\"))"
+				+ "{"
+				+ "		throw new UnrecognizeKeywordException($1[j]);"
+				+ "}"
+				+ "}"
+				+ "}";
 	//	System.out.println(body);
 		
 		ctConstructor.setBody(body);
