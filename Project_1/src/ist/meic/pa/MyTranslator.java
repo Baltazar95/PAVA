@@ -8,6 +8,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
+import javassist.CtNewConstructor;
 import javassist.NotFoundException;
 import javassist.Translator;
 
@@ -37,6 +38,7 @@ public class MyTranslator implements Translator
 		try 
 		{
 			CheckKeywordArgs(ctClass);
+			
 		} 
 		catch (ClassNotFoundException e) 
 		{
@@ -45,29 +47,52 @@ public class MyTranslator implements Translator
 		}
 	}
 	
+
 	public void CheckKeywordArgs(CtClass ctClass) throws ClassNotFoundException, CannotCompileException, NotFoundException 
 	{
 		for(CtConstructor ctConstructor: ctClass.getDeclaredConstructors())
 		{
+			
 			//This loop will enable the programmers to have other annotations because it only cares with the KeywordArgs annotation
 			for(Object annotation: ctConstructor.getAnnotations())
 			{
 				if(annotation instanceof KeywordArgs)
 				{
 					SplitArgs(((KeywordArgs) annotation).value());
-					Injection(ctClass, ctConstructor, annotation);
+					CheckKeywordArgs_aux(ctClass.getSuperclass());
+					Injection(ctClass, ctConstructor);
 					break;
 				}
 			}
 		}
 	}
 	
-	public void Injection(CtClass ctClass, CtConstructor ctConstructor, Object annotation) throws CannotCompileException, NotFoundException
+	public void CheckKeywordArgs_aux(CtClass ctClass) throws ClassNotFoundException, CannotCompileException, NotFoundException 
+	{
+		for(CtConstructor ctConstructor: ctClass.getDeclaredConstructors())
+		{
+			
+			//This loop will enable the programmers to have other annotations because it only cares with the KeywordArgs annotation
+			for(Object annotation: ctConstructor.getAnnotations())
+			{
+				if(annotation instanceof KeywordArgs)
+				{
+					SplitArgs(((KeywordArgs) annotation).value());
+					if(!ctClass.getSuperclass().getName().equals("java.lang.Object"))
+						CheckKeywordArgs_aux(ctClass.getSuperclass());
+					ctClass.addConstructor(CtNewConstructor.defaultConstructor(ctClass));
+					break;
+				}
+			}
+		}
+	}
+	
+	public void Injection(CtClass ctClass, CtConstructor ctConstructor) throws CannotCompileException, NotFoundException
 	{
 		String body="{ boolean verifyVariable = false;";
 		
 		//FIXME continue this
-		for(CtField ct : ctClass.getDeclaredFields())
+		for(CtField ct : ctClass.getFields())
 		{
 			if(map.containsKey(ct.getName()))
 			{
@@ -96,18 +121,19 @@ public class MyTranslator implements Translator
 						+ "{\n"
 						+ "     verifyVariable = false;\n"
 						+ "}\n";
+		
+				
 				
 			}
 			else
 			{
-				//FIXME create exception
+				throw new UnrecognizeKeywordException(ct.getName());
 			}
 		}
 		body = body + "}";
 	//	System.out.println(body);
 		
 		ctConstructor.setBody(body);
-		
 	}
 	
 	public void SplitArgs(String args)
@@ -117,13 +143,15 @@ public class MyTranslator implements Translator
 		for(String param : parts)
 		{
 			paramValue = param.split("=");
-			if(paramValue.length == 1)
-			{
-				map.put(paramValue[0], "");
-			}
-			else
-			{
-				map.put(paramValue[0], paramValue[1]);
+			if(!map.containsKey(paramValue[0])){
+				if(paramValue.length == 1)
+				{
+					map.put(paramValue[0], "");
+				}
+				else
+				{
+					map.put(paramValue[0], paramValue[1]);
+				}
 			}
 		}
 
