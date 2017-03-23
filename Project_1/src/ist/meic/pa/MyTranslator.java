@@ -113,7 +113,8 @@ public class MyTranslator implements Translator
 												+ " verifyVariable = true;\n"
 												+ " i++;\n"; 
 				}
-				body = body  + " }} if(!verifyVariable)\n"
+				body = body  + " }"
+						+ "} if(!verifyVariable)\n"
 						+ "{\n"
 						+ " " + ct.getName() + "=" + map.get(ct.getName()) + ";\n"
 						+ "}\n"
@@ -121,14 +122,18 @@ public class MyTranslator implements Translator
 						+ "{\n"
 						+ "     verifyVariable = false;\n"
 						+ "}\n";
-		
-				
+				map.remove(ct.getName());
 				
 			}
 			else
 			{
-				throw new UnrecognizeKeywordException(ct.getName());
+				//throw new UnrecognizeKeywordException(ct.getName());
 			}
+		}
+		
+		if(!map.isEmpty())
+		{
+			//throw new UnrecognizeKeywordException(); 
 		}
 		body = body + "}";
 	//	System.out.println(body);
