@@ -143,7 +143,7 @@ public class MyTranslator implements Translator
 				+ "{"
 					+ "if(check[j] == null)"
 					+ "{"
-					+ "		System.out.println($1[j]);"
+					+ "		throw new ist.meic.pa.UnrecognizeKeywordException($1[j]);"
 					+ "break;"
 					+ "}"
 					+ "}"
