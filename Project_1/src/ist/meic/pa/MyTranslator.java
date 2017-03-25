@@ -2,6 +2,7 @@ package ist.meic.pa;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -52,7 +53,6 @@ public class MyTranslator implements Translator
 	{
 		for(CtConstructor ctConstructor: ctClass.getDeclaredConstructors())
 		{
-			
 			//This loop will enable the programmers to have other annotations because it only cares with the KeywordArgs annotation
 			for(Object annotation: ctConstructor.getAnnotations())
 			{
@@ -61,6 +61,7 @@ public class MyTranslator implements Translator
 					SplitArgs(((KeywordArgs) annotation).value());
 					CheckKeywordArgs_aux(ctClass.getSuperclass());
 					Injection(ctClass, ctConstructor);
+					ctClass.addConstructor(CtNewConstructor.defaultConstructor(ctClass));
 					break;
 				}
 			}
@@ -69,9 +70,9 @@ public class MyTranslator implements Translator
 	
 	public void CheckKeywordArgs_aux(CtClass ctClass) throws ClassNotFoundException, CannotCompileException, NotFoundException 
 	{
+
 		for(CtConstructor ctConstructor: ctClass.getDeclaredConstructors())
-		{
-			
+		{	
 			//This loop will enable the programmers to have other annotations because it only cares with the KeywordArgs annotation
 			for(Object annotation: ctConstructor.getAnnotations())
 			{
@@ -79,8 +80,9 @@ public class MyTranslator implements Translator
 				{
 					SplitArgs(((KeywordArgs) annotation).value());
 					if(!ctClass.getSuperclass().getName().equals("java.lang.Object"))
+					{
 						CheckKeywordArgs_aux(ctClass.getSuperclass());
-					ctClass.addConstructor(CtNewConstructor.defaultConstructor(ctClass));
+					}
 					break;
 				}
 			}
@@ -91,8 +93,7 @@ public class MyTranslator implements Translator
 	{
 		String body="{ boolean verifyVariable = false;"
 				+ "	   String[] check = new String[$1.length];";
-		String[] fields;
-		//FIXME continue this
+		
 		for(CtField ct : ctClass.getFields())
 		{
 			if(map.containsKey(ct.getName()))
@@ -105,8 +106,9 @@ public class MyTranslator implements Translator
 							+ "if($1[i].equals(\""+ ct.getName() +"\")){\n"
 									+ "check[i] = \"Here\";";
 
-				if((ct.getType().getName()).equals("java.lang.String")){
-					body = body + ct.getName()  + "= (String) $1[i+1];\n"
+				if(type.startsWith("java")){
+					String[] splitted = type.split("\\.");
+					body = body + ct.getName()  + "= (" + splitted[splitted.length-1] + ") $1[i+1];\n"
 								+ "           		verifyVariable = true;\n"
 								+ "           		i++;\n";
 					}
@@ -119,38 +121,31 @@ public class MyTranslator implements Translator
 						+ " }"
 						+ "} "
 						+ "if(!verifyVariable)\n"
-						+ "{\n"
-						+ " " + ct.getName() + "=" + map.get(ct.getName()) + ";\n"
-						+ "}\n"
+						+ "{\n";
+				
+				if(!map.get(ct.getName()).equals(""))
+				{
+					body = body + " " + ct.getName() + "=" + map.get(ct.getName()) + ";\n";
+				}
+				body = body + "}\n"
 						+ "else\n"
 						+ "{\n"
 						+ "     verifyVariable = false;\n"
 						+ "}\n";
-				map.remove(ct.getName());
-				
 			}
-			else
-			{
-				//throw new UnrecognizeKeywordException(ct.getName());
-			}
-		}
-		
-		if(!map.isEmpty())
-		{
-			//throw new UnrecognizeKeywordException(); 
 		}
 		body = body + "for(int j = 0; j<$1.length; j++)"
 				+ "{"
 					+ "if(check[j] == null)"
 					+ "{"
-					+ "		throw new ist.meic.pa.UnrecognizeKeywordException($1[j]);"
-					+ "break;"
+					+ "		throw new RuntimeException(\"Unrecognized keyword: \" + $1[j]);"
 					+ "}"
 					+ "}"
 				+ "}";
 	//	System.out.println(body);
 		
 		ctConstructor.setBody(body);
+		map.clear();
 	}
 	
 	public void SplitArgs(String args)
@@ -160,7 +155,7 @@ public class MyTranslator implements Translator
 		for(String param : parts)
 		{
 			paramValue = param.split("=");
-			if(!map.containsKey(paramValue[0])){
+			if(!map.containsKey(paramValue[0]) || map.get(paramValue[0]).equals("")){
 				if(paramValue.length == 1)
 				{
 					map.put(paramValue[0], "");
@@ -171,18 +166,6 @@ public class MyTranslator implements Translator
 				}
 			}
 		}
-
 	}
 	
-	
-	
-	//FIXME APAGAR!!!!!!!!!
-	public void printshit()
-	{
-		for(String key : map.keySet())
-		{
-			System.out.println(key);
-			System.out.println(map.get(key));
-		}
-	}
 }
