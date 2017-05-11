@@ -1,21 +1,23 @@
-(defun concat (x y)
-  (concatenate 'string x "-" y))
-
 (defun make-constructor (class-name class-attributes)
-  `(defun ,(intern (concat "MAKE" (symbol-name class-name))) (&key ,@class-attributes) (vector ,@class-attributes)))
+  `(defun ,(intern (concatenate 'string  "MAKE-" (symbol-name class-name))) (&key ,@class-attributes) (vector ,(symbol-name class-name) ,@class-attributes)))
 
-(defun create-func (class-name x index)
-  `(defun ,(intern (concat (symbol-name class-name) (symbol-name x)))
+(defun make-getter (class-name x index)
+  `(defun ,(intern (concatenate 'string (symbol-name class-name) "-" (symbol-name x)))
        (,class-name) (aref ,class-name ,index)))
 
 (defun make-getters (class-name class-attributes)
-    (loop for x in class-attributes
-       do
-	 (create-func class-name x 0)))
+  (let ((index 0))
+    (mapcar
+     #'(lambda (x) (make-getter class-name x (incf index))) class-attributes)))
+
+(defun make-isinstance (class-name)
+  `(defun ,(intern (concatenate 'string (symbol-name class-name) "?"))
+       (x) (eq (aref x 0) ,(symbol-name class-name))))
 
 (defmacro def-class (class-name &rest class-attributes)
-  (progn (make-getters class-name class-attributes)
-	 (make-constructor class-name class-attributes)))
+  `(progn ,(make-constructor class-name class-attributes)
+	  ,@(make-getters class-name class-attributes)
+	  ,(make-isinstance class-name)))
 
 
 
