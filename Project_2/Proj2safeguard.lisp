@@ -14,11 +14,23 @@
   `(defun ,(intern (concatenate 'string (symbol-name class-name) "?"))
        (x) (eq (aref x 0) ,(symbol-name class-name))))
 
-(defmacro def-class (class-name &rest class-attributes)
-  `(progn ,(make-constructor class-name class-attributes)
-	  ,@(make-getters class-name class-attributes)
-	  ,(make-isinstance class-name)))
+(defun make-getfields (class-name class-attributes)
+  `(defun ,(intern (concatenate 'string (symbol-name class-name) "-FIELDS")) (,class-name) ',class-attributes)) 
 
+(defmacro def-class (class-name &rest class-attributes)
+  (if (listp class-name)
+      (let ((name (nth 0 class-name))
+	    (attributes (append ((intern (concatenate 'string (symbol-name (nth 1 class-name)) "-FIELDS")))) class-attributes))
+      `(progn ,(make-constructor name attributes)
+	      ,@(make-getters name attributes)
+	      ,(make-isinstance name)
+	      ,(make-getfields name attributes)))
+  
+      `(progn ,(make-constructor class-name class-attributes)
+	      ,@(make-getters class-name class-attributes)
+	      ,(make-isinstance class-name)
+	      ,(make-getfields class-name class-attributes))))
+;
 
 
 
