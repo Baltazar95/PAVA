@@ -4,8 +4,9 @@
   `(defun ,(intern (concatenate 'string  "MAKE-" (symbol-name class-name))) (&key ,@class-attributes) (vector ,(symbol-name class-name) ,@class-attributes)))
 
 (defun make-getter (class-name x index)
-  `(defun ,(intern (concatenate 'string (symbol-name class-name) "-" (symbol-name x)))
-       (,class-name) (aref ,class-name ,index)))
+  `(defun ,(intern (concatenate 'string (symbol-name class-name) "-" (symbol-name x))) (,class-name) 
+       (if (,(intern (concatenate 'string (symbol-name class-name) "?")) ,class-name)
+		    (aref ,class-name ,index))))
 
 (defun make-getters (class-name class-attributes)
   (let ((index 0))
@@ -13,8 +14,10 @@
      #'(lambda (x) (make-getter class-name x (incf index))) class-attributes)))
 
 (defun make-isinstance (class-name)
-  `(defun ,(intern (concatenate 'string (symbol-name class-name) "?"))
-       (x) (eq (aref x 0) ,(symbol-name class-name))))
+  `(defun ,(intern (concatenate 'string (symbol-name class-name) "?")) (x)
+     (cond ((equal (aref x 0) ,(symbol-name class-name)) T)
+	   ((not (car (gethash (aref x 0) ,hash))) NIL)
+	   (T (,(intern (concatenate 'string (symbol-name class-name) "?")) ,#(symbol-name `(caar (gethash (aref x 0) ,hash))))))))
 
 (defun insert-in-hash (class-name inheritance class-attributes)
   `(setf (gethash ,(symbol-name class-name) hash)
