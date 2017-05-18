@@ -1,0 +1,1 @@
+(load (compile-file "proj2.lisp"))
