@@ -13,20 +13,9 @@
 		     ,(symbol-name x)
 		     (mapcar #'(lambda (y) (symbol-name y))
 			     (cdr (gethash (aref name 0) ,hash))) :test #'equal))))))
-
-(defun make-setter (class-name x)
-  `(defun ,(intern (concatenate 'string (symbol-name class-name) "-" (symbol-name x))) (name value)
-     ;; Confirm if x is of type class-name
-     (if (,(intern (concatenate 'string (symbol-name class-name) "?")) name)
-	 (setf (aref name
-	       (+ 1 (position
-		     ,(symbol-name x)
-		     (mapcar #'(lambda (y) (symbol-name y))
-			     (cdr (gethash (aref name 0) ,hash))) :test #'equal))) value))))
      
-
-(defun make-get-set (class-name class-attributes)
-    (mapcar #'(lambda (x) (make-getter class-name x) (make-setter class-name x)) class-attributes))
+(defun make-getters (class-name class-attributes)
+    (mapcar #'(lambda (x) (make-getter class-name x)) class-attributes))
 
 (defun make-isinstance (class-name)
   `(defun ,(intern (concatenate 'string (symbol-name class-name) "?")) (x)
@@ -60,12 +49,9 @@
 	    (attributes (append (remove-parenthesis (get-inherited-attributes (cdr class-name))) class-attributes)))
 	`(progn ,(make-constructor name attributes)
 		,(make-isinstance name)
-		,@(make-get-set name attributes)
+		,@(make-getters name attributes)
 		,(insert-in-hash name inheritance attributes)))
       `(progn ,(make-constructor class-name class-attributes)
 	      ,(make-isinstance class-name)
-	      ,@(make-get-set class-name class-attributes)
+	      ,@(make-getters class-name class-attributes)
 	      ,(insert-in-hash class-name '() class-attributes))))
-
-
-
